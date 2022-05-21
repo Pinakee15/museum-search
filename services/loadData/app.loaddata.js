@@ -1,6 +1,6 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-
-let url = "https://data.lacity.org/resource/trxm-jn3c.json";
+const env = require("../../env/app.env")
+let url = env.dataUrl;
 
 let settings = { method: "Get" };
 

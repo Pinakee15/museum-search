@@ -9,39 +9,51 @@ const controller = {
         // We will check do we have already stored the data on local memory or not
         console.log("Query : ", req.query)
         if(museumData.length > 0){
-            // console.log("Data already stored : ", museumData)
-            // return res.json({"message": "hello"})
+            // **PASS**. If Museum data already exist then no need to fetch
         }
 
         //If not, then we will first fetch the data and store it in local variable
-        museumData = await fetchData()
-        console.log("Data appended = ", museumData);
+        else {
+            museumData = await fetchData()
+        }
 
-        // Login
+        // Get query string variables
+        let date = req.query?.date;
+        let ignore = req.query?.ignore;
+
+        // Declare local variables
         let response = {}
-        let datetime = new Date(1404198000000)
+        let datetime = new Date(parseInt(date))
         let datetimeString = datetime.toISOString();
-        console.log("Date time : ", datetime);
+        let obj = {}
+        let ignored = null;
+
+        // Get visits data
         museumData.map(data=>{
             if(data?.month.includes(datetimeString.substring(0,10))){
-                let d =   {
-                    america_tropical_interpretive_center: '2786',
-                    avila_adobe: '11747',
-                    chinese_american_museum: '1183',
-                    gateway_to_nature_center: '0',
-                    firehouse_museum: '2904',
-                    hellman_quon: '0',
-                    iamla: '716',
-                    pico_house: '0',
-                    visitor_center_avila_adobe: '0',
-                    museum_of_social_justice: '1232',
-                    biscailuz_gallery: '0'
-                  }
-                console.log("This is max : ", utils.getMax(d))
+                obj = utils.getAllVisitDetails(data, ignore)
+                ignored = utils.getIgnoredMuseum(data , ignore)
             }
         })
 
-        return res.json({"message": "hello"})
+        let attendance = {
+            month :  (utils.numToMonthConverter(datetime.getMonth()+1)).toString(),
+            year : datetime.getFullYear(),
+            highest :{
+                museum : obj['museumWithMaxVisit'],
+                visitors : obj['maxVisits']
+            },
+            lowest :{
+                museum : obj['museumWithMinVisit'],
+                visitors : obj['minVisits']
+            },
+            total : obj['total']
+        }
+
+        ignored ? attendance['ignored'] = ignored : null;
+        response['attendance'] = attendance;
+
+        return Object.keys(obj).length>0 ? res.json(response) : res.json({"message" : "No museum data found in the provide date"})
     }
 }
 
